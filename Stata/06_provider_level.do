@@ -1,0 +1,140 @@
+/*=============================================================================
+  06 - Provider-level characteristics and waiting times
+  -----------------------------------------------------------------------------
+  Imports the synthetic hospital-characteristics workbook, builds the site-level
+  covariates, merges them onto the analytic cohort by hospital of diagnosis, and
+  reports mean waiting time (with its standard error and the number of patients
+  and hospitals) by each site characteristic.
+
+  This mirrors the real provider-level script; the synthetic workbook is built
+  by the R helper Create_synthetic_provider_level_excel_colon.R and holds only
+  the columns used here. The competitor status (net patient flow) is merged in
+  if its file is present, otherwise that covariate is skipped.
+
+  Inputs:
+    $provxlsx                                   hospital characteristics (xlsx)
+    $syn/colon_competitor_status_synthetic.dta  optional: winner/loser status
+    $work/colon_analysis.dta                    analytic cohort from step 03
+  Output (in $out):
+    colon_provider_level.txt
+=============================================================================*/
+
+clear all
+set more off
+
+*------------------------------------------------------------------------------
+* Provider characteristics workbook -> one row per site code
+*------------------------------------------------------------------------------
+import excel "$provxlsx", sheet("Sheet1") firstrow clear
+
+drop if missing(Trust_Name)
+drop if missing(Hospital_site_code)
+
+* exclude flagged trust colours (data-quality exclusions in the real file)
+drop if inlist(Trust_Name_colour, "Light Red", "Pink Red", "Orange")
+
+* if a site appears more than once, prefer the row carrying surgery information
+capture confirm string variable Bowel_ca_surgery
+if !_rc destring Bowel_ca_surgery, replace force
+bysort Hospital_site_code: gen byte n_rows = _N
+drop if n_rows > 1 & missing(Bowel_ca_surgery)
+drop n_rows
+
+rename Hospital_site_code diag_hosp
+
+* binary site characteristics
+capture confirm string variable Comprehensive_centre
+if !_rc destring Comprehensive_centre, replace force
+capture confirm string variable Teaching_hospitals
+if !_rc destring Teaching_hospitals, replace force
+
+gen byte comprehensive = (Comprehensive_centre == 1)
+label define comp 0 "Non-comprehensive" 1 "Comprehensive"
+label values comprehensive comp
+
+gen byte teaching = (Teaching_hospitals == 1)
+label define teach 0 "Non-teaching" 1 "Teaching"
+label values teaching teach
+
+* CQC rating as an ordered score
+gen byte cqc_rating = .
+replace cqc_rating = 1 if Latest_Rating == "Inadequate"
+replace cqc_rating = 2 if Latest_Rating == "Requires Improvement"
+replace cqc_rating = 3 if Latest_Rating == "Good"
+replace cqc_rating = 4 if Latest_Rating == "Outstanding"
+label define cqc 1 "Inadequate" 2 "Requires Improvement" 3 "Good" 4 "Outstanding"
+label values cqc_rating cqc
+
+* staff engagement and morale as quintiles
+capture confirm string variable Staff_engagement
+if !_rc destring Staff_engagement, replace force
+capture confirm string variable Moral
+if !_rc destring Moral, replace force
+xtile staff_eng_cat = Staff_engagement, nquantiles(5)
+xtile moral_cat     = Moral,            nquantiles(5)
+label define quint 1 "Q1 (lowest)" 2 "Q2" 3 "Q3" 4 "Q4" 5 "Q5 (highest)"
+label values staff_eng_cat quint
+label values moral_cat     quint
+
+* bed occupancy: high vs normal at the 95% threshold
+capture confirm string variable mean
+if !_rc destring mean, replace force
+gen byte bed_occ_cat = .
+replace bed_occ_cat = 0 if mean <  0.95 & !missing(mean)
+replace bed_occ_cat = 1 if mean >= 0.95 & !missing(mean)
+label define bedocc 0 "Normal (<95%)" 1 "High (>=95%)"
+label values bed_occ_cat bedocc
+
+keep diag_hosp comprehensive teaching cqc_rating staff_eng_cat moral_cat bed_occ_cat
+tempfile provchar
+save `provchar'
+
+*------------------------------------------------------------------------------
+* Optional: competitor status (winner / loser / insignificant) from net flow
+*------------------------------------------------------------------------------
+local have_comp = 0
+capture confirm file "$syn/colon_competitor_status_synthetic.dta"
+if !_rc {
+    local have_comp = 1
+}
+
+*------------------------------------------------------------------------------
+* Merge characteristics onto the analytic cohort
+*------------------------------------------------------------------------------
+use "$work/colon_analysis.dta", clear
+
+merge m:1 diag_hosp using `provchar', keep(master match) nogenerate
+
+if `have_comp' {
+    merge m:1 diag_hosp using "$syn/colon_competitor_status_synthetic.dta", ///
+        keep(master match) nogenerate
+}
+
+*------------------------------------------------------------------------------
+* Mean waiting time by each site characteristic
+*  reports mean, SE and patient N per group, and the number of hospitals
+*------------------------------------------------------------------------------
+log using "$out/colon_provider_level.txt", text replace
+
+local wtvars wt_dx_to_dtt wt_dtt_to_tx wt_dx_to_tx
+local covars comprehensive teaching cqc_rating staff_eng_cat moral_cat bed_occ_cat
+if `have_comp' local covars `covars' competitor_status
+
+foreach y of local wtvars {
+    foreach c of local covars {
+
+        display _n "Outcome: `y'  |  characteristic: `c'"
+        tabstat `y', by(`c') stats(mean semean n) nototal
+
+        * number of distinct hospitals contributing to each group
+        preserve
+            bysort `c' diag_hosp: keep if _n == 1
+            gen byte one = 1
+            display "Hospitals per group:"
+            tabstat one, by(`c') stats(n) nototal
+        restore
+    }
+}
+
+log close
+display "Step 06 done: provider-level results written to $out/colon_provider_level.txt"
