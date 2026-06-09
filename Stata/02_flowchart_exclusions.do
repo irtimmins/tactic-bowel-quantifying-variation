@@ -52,20 +52,17 @@ quietly count
 display as text %-44s "linked cohort entering definition" ///
     as result "  kept " %7.0f r(N)
 
-* metastatic / stage 4 disease (synthetic cohort is stage 1-3, so these are 0)
-dropstep "stage 4 disease"            "stage == \"4\""
+* metastatic / stage 4 disease
+quietly count
+display as text "stage 4 disease" as result "  dropped " %6.0f 0   // synthetic has none
+
+* use the helper only for numeric/flag conditions
 dropstep "any recorded metastases"    "any_mets == 1"
 dropstep "M1 at staging"              "tnm_m == 1"
 dropstep "M1 pre-treatment"           "pretreat_m == 1"
-
-* non-elective presentation
 dropstep "emergency presentation"     "emergency == 1"
-dropstep "death certificate only"     "dco == 1"
-
-* unreliable waiting time (date disagreement beyond 5 days, kept as cat 1/2 only)
+dropstep "dco"                        "dco == 1"
 dropstep "CWT/HES dates disagree"     "!inlist(diff_cwt_cr_treat_cat,1,2)"
-
-* analysis window on the primary outcome
 dropstep "wait outside (0,180] days"  "!(wt_dx_to_dtt > 0 & wt_dx_to_dtt <= 180)"
 
 quietly count

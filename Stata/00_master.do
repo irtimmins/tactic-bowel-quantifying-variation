@@ -17,10 +17,13 @@ set more off
 version 16
 
 /* folders ------------------------------------------------------------------ */
+* root path - update this if the project moves
+global root "D:/Projects/#2045_ICON_TACTIC/Project1_interim_bowel/tactic-bowel-quantifying-variation"
+cd "$root"
 * where the synthetic .dta files from the R generator live
 global syn   "Data/synthetic"
 * where to put derived datasets and the analytic cohort
-global work  "Data/work"
+global work  "Data/temp"
 * where to put tables, figures and logs
 global out   "Output"
 * the provider characteristics workbook (synthetic, from the R helper)
@@ -30,11 +33,11 @@ cap mkdir "$work"
 cap mkdir "$out"
 
 /* run the pipeline --------------------------------------------------------- */
-do "01_merge_cwt.do"
-do "02_flowchart_exclusions.do"
-do "03_patient_characteristics.do"
-do "04_interaction_change_trust_route.do"
-do "05_trust_random_effects.do"
-do "06_provider_level.do"
+do "Stata/01_merge_cwt.do"
+do "Stata/02_flowchart_exclusions.do"
+do "Stata/03_patient_characteristics.do"
+do "Stata/04_interaction_change_trust_route.do"
+do "Stata/05_trust_random_effects.do"
+do "Stata/06_provider_level.do"
 
 display "Pipeline complete."

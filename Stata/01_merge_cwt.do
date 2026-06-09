@@ -60,8 +60,10 @@ save `backbone'
 use "$syn/colon_cwt_records_synthetic.dta", clear
 
 gen double dtt_date    = date(treat_period_start, "DMY")
-gen double cwt_tx_date = date(treat_start,        "DMY")
-gen double mdt_date    = date(mdt_date,           "DMY")
+gen double cwt_tx_date = date(treat_start, "DMY")
+gen double mdt_date2   = date(mdt_date, "DMY")
+drop mdt_date
+rename mdt_date2 mdt_date
 format dtt_date cwt_tx_date mdt_date %td
 
 * keep surgical modalities; 23/24 only valid from mid-2020 onwards
