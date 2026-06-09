@@ -4,4 +4,4 @@
 .Ruserdata
 Data/*
 Output/*
-Stata/*.stwsp
+Stata/~*
