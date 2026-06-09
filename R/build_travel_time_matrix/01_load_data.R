@@ -41,7 +41,7 @@ onspd <- fread("E:/Data_PHE/Extracts/#2045_ICON_TACTIC/travel_time/ONSPD_MAY_202
 cat("onspd postcodes:", nrow(onspd), "\n")
 
 # ods site file (used for postcode validation via api, ets.csv kept for reference)
-ods <- read_csv("Data/travel_time/ets.csv", col_names = FALSE) %>%
+ods <- read_csv("E:/Data_PHE/Extracts/#2045_ICON_TACTIC/travel_time/ets.csv", col_names = FALSE) %>%
   select(site_code = X1, site_name = X2, postcode = X10,
          trust_code = X15, open_date = X11, close_date = X12) %>%
   mutate(
