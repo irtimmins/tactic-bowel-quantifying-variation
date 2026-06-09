@@ -72,4 +72,4 @@ foreach y of local wtvars {
 }
 
 log close
-display "Step 05 done: trust effects written to $out and $work."
+display "Step 06 done: trust effects written to $out and $work."

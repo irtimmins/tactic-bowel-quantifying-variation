@@ -90,13 +90,14 @@ tempfile provchar
 save `provchar'
 
 *------------------------------------------------------------------------------
-* Optional: competitor status (winner / loser / insignificant) from net flow
+* Optional: net patient flow status, for the diagnosing and treating hospital
 *------------------------------------------------------------------------------
-local have_comp = 0
-capture confirm file "$syn/colon_competitor_status_synthetic.dta"
-if !_rc {
-    local have_comp = 1
-}
+local have_diag = 0
+local have_tx   = 0
+capture confirm file "$work/colon_competitor_status_diag.dta"
+if !_rc local have_diag = 1
+capture confirm file "$work/colon_competitor_status_tx.dta"
+if !_rc local have_tx = 1
 
 *------------------------------------------------------------------------------
 * Merge characteristics onto the analytic cohort
@@ -105,9 +106,15 @@ use "$work/colon_analysis.dta", clear
 
 merge m:1 diag_hosp using `provchar', keep(master match) nogenerate
 
-if `have_comp' {
-    merge m:1 diag_hosp using "$syn/colon_competitor_status_synthetic.dta", ///
-        keep(master match) nogenerate
+* diagnosing-hospital flow status keys on diag_hosp
+if `have_diag' {
+    merge m:1 diag_hosp using "$work/colon_competitor_status_diag.dta", ///
+        keepusing(competitor_status_diag) keep(master match) nogenerate
+}
+* treating-hospital flow status keys on tx_hosp
+if `have_tx' {
+    merge m:1 tx_hosp using "$work/colon_competitor_status_tx.dta", ///
+        keepusing(competitor_status_tx) keep(master match) nogenerate
 }
 
 *------------------------------------------------------------------------------
@@ -118,23 +125,27 @@ log using "$out/colon_provider_level.txt", text replace
 
 local wtvars wt_dx_to_dtt wt_dtt_to_tx wt_dx_to_tx
 local covars comprehensive teaching cqc_rating staff_eng_cat moral_cat bed_occ_cat
-if `have_comp' local covars `covars' competitor_status
+if `have_diag' local covars `covars' competitor_status_diag
+if `have_tx'   local covars `covars' competitor_status_tx
 
 foreach y of local wtvars {
     foreach c of local covars {
 
+        * count distinct hospitals by the role the covariate refers to
+        local hospvar diag_hosp
+        if "`c'" == "competitor_status_tx" local hospvar tx_hosp
+
         display _n "Outcome: `y'  |  characteristic: `c'"
         tabstat `y', by(`c') stats(mean semean n) nototal
 
-        * number of distinct hospitals contributing to each group
         preserve
-            bysort `c' diag_hosp: keep if _n == 1
+            bysort `c' `hospvar': keep if _n == 1
             gen byte one = 1
-            display "Hospitals per group:"
+            display "Hospitals per group (`hospvar'):"
             tabstat one, by(`c') stats(n) nototal
         restore
     }
 }
 
 log close
-display "Step 06 done: provider-level results written to $out/colon_provider_level.txt"
+display "Step done: provider-level results written to $out/colon_provider_level.txt"

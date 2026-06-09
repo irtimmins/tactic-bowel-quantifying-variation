@@ -38,6 +38,7 @@ do "Stata/02_flowchart_exclusions.do"
 do "Stata/03_patient_characteristics.do"
 do "Stata/04_interaction_change_trust_route.do"
 do "Stata/05_trust_random_effects.do"
-do "Stata/06_provider_level.do"
+do "Stata/06_trust_random_effects.do"
+do "Stata/07_provider_level.do"
 
 display "Pipeline complete."

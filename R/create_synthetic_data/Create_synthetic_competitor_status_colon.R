@@ -52,34 +52,34 @@ cat("Synthetic hospital sites:", nrow(sites), "\n")
 # districts sit near a randomly chosen "local" site; patients are assigned to a
 # district, so co-resident patients can attend different (higher-pull) sites
 districts <- tibble(
-  district = sprintf("D%04d", seq_len(N_DISTRICT)),
+  lsoa11_code = sprintf("E0%06d", seq_len(N_DISTRICT)),   # synthetic LSOA codes
   local_site = sample(sites$sitecode, N_DISTRICT, replace = TRUE,
                       prob = 1 - sites$pull[match(sites$sitecode, sites$sitecode)] + 0.1)
 ) %>%
   left_join(sites, by = c("local_site" = "sitecode")) %>%
-  transmute(district, local_site,
+  transmute(lsoa11_code, local_site,
             hx = sx + rnorm(n(), 0, HOME_SD),
             hy = sy + rnorm(n(), 0, HOME_SD))
 
 pat <- cohort %>%
-  mutate(district = sample(districts$district, n(), replace = TRUE)) %>%
-  left_join(districts %>% select(district, hx, hy), by = "district")
+  mutate(lsoa11_code = sample(districts$lsoa11_code, n(), replace = TRUE)) %>%
+  left_join(districts %>% select(lsoa11_code, hx, hy), by = "lsoa11_code")
 
-# ---- nearest site to each district (the "expected" local provider) ----------
-dist_long <- crossing(districts %>% select(district, hx, hy),
+# ---- nearest site to each lsoa (the "expected" local provider) --------------
+dist_long <- crossing(districts %>% select(lsoa11_code, hx, hy),
                       sites %>% select(sitecode, sx, sy)) %>%
   mutate(total_drive_time = round(
     sqrt((hx - sx)^2 + (hy - sy)^2) * SCALE_MIN + 1 + abs(rnorm(n(), 0, NOISE_SD)), 2))
 
 nearest <- dist_long %>%
-  group_by(district) %>%
+  group_by(lsoa11_code) %>%
   slice_min(total_drive_time, n = 1, with_ties = FALSE) %>%
   ungroup() %>%
-  transmute(district, nearest_site = sitecode)
+  transmute(lsoa11_code, nearest_site = sitecode)
 
 # ---- net patient flow per site ----------------------------------------------
 flows <- pat %>%
-  left_join(nearest, by = "district") %>%
+  left_join(nearest, by = "lsoa11_code") %>%
   mutate(core = diag_hosp == nearest_site)
 
 leavers  <- flows %>% filter(!core) %>% count(site = nearest_site, name = "n_leavers")
@@ -103,8 +103,13 @@ site_flow <- sites %>%
 comp <- site_flow %>% transmute(diag_hosp = site, competitor_status)
 write_dta(comp, paste0(base_dir, "colon_competitor_status_synthetic.dta"))
 
+# patient -> lsoa11_code lookup: used by the Stata step on synthetic data
+# (on real data lsoa11_code is already in the cohort)
+pat_lsoa <- pat %>% select(pseudo_patientid, lsoa11_code)
+write_dta(pat_lsoa, paste0(base_dir, "colon_patient_lsoa_synthetic.dta"))
+
 # ---- also write distance matrix + valid sites, for parity with the real flow -
-dist_out <- dist_long %>% transmute(district, sitecode, total_drive_time)
+dist_out <- dist_long %>% transmute(lsoa11_code, sitecode, total_drive_time)
 write_dta(dist_out,  paste0(base_dir, "colon_pairwise_distance_matrix_synthetic.dta"))
 valid <- sites %>% transmute(diag_hosp = sitecode, valid = 1L)
 write_dta(valid, paste0(base_dir, "colon_valid_sites_synthetic.dta"))
