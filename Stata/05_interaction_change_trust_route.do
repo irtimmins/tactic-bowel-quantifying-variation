@@ -1,5 +1,5 @@
 /*=============================================================================
-  04 - Interaction: change of trust x route to diagnosis
+  05 - Interaction: change of trust x route to diagnosis
   -----------------------------------------------------------------------------
   Tests whether the effect of being diagnosed and treated at different trusts
   on waiting time depends on the route to diagnosis. Fits a linear model with
@@ -99,4 +99,4 @@ replace p = round(p, 0.0001)
 order measure F df_num df_den p
 export delimited using "$out/colon_interaction_tests.csv", replace quote
 
-display "Step 04 done: log + tidy CSVs written to $out."
+display "Step 05 done: log + tidy CSVs written to $out."

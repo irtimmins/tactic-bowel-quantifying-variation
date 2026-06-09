@@ -1,5 +1,5 @@
 /*=============================================================================
-  05 - Competitor status: net patient flow from the distance matrix
+  06 - Competitor status: net patient flow from the distance matrix
   -----------------------------------------------------------------------------
   Classifies each hospital as a Winner (net importer of patients), Loser (net
   exporter) or Insignificant, based on whether the observed patient flow
@@ -210,4 +210,4 @@ foreach h in diag_hosp tx_hosp {
     display "Saved: colon_competitor_status_`tag'.dta  (" _N " hospitals)"
 }
 
-display _n "Step 05 done: diagnosing and treating hospital flow status saved."
+display _n "Step 06 done: diagnosing and treating hospital flow status saved."

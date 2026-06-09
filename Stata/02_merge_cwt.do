@@ -1,5 +1,5 @@
 /*=============================================================================
-  01 - Cancer waiting times linkage (the 1b merge)
+  02 - Cancer waiting times linkage (the 1b merge)
   -----------------------------------------------------------------------------
   Starts from the registry+HES backbone (Table A) and merges the raw CWT
   records (Table B), reproducing the real linkage so the analytic cohort and

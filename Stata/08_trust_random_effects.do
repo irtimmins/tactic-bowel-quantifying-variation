@@ -1,5 +1,5 @@
 /*=============================================================================
-  06 - Trust-level effects (fixed and random)
+  08 - Trust-level effects (fixed and random)
   -----------------------------------------------------------------------------
   Estimates between-trust variation in waiting time. For each outcome, within
   each comorbidity stratum, four models are fitted:

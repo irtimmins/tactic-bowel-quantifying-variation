@@ -1,5 +1,5 @@
 /*=============================================================================
-  02 - Exclusion flow chart
+  03 - Exclusion flow chart
   -----------------------------------------------------------------------------
   Renders the patient-exclusion funnel recorded during the linkage, and adds
   the downstream cohort-definition exclusions (stage 4 / metastases, emergency

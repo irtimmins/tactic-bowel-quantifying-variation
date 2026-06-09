@@ -1,5 +1,5 @@
 /*=============================================================================
-  03 - Patient characteristics and waiting times
+  04 - Patient characteristics and waiting times
   -----------------------------------------------------------------------------
   Builds the analysis variables (age band, labelled factors, the analytic
   subset) used by every later step, then produces a characteristics table:

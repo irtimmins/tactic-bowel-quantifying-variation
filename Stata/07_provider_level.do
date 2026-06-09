@@ -1,5 +1,5 @@
 /*=============================================================================
-  06 - Provider-level characteristics and waiting times
+  07 - Provider-level characteristics and waiting times
   -----------------------------------------------------------------------------
   Imports the synthetic hospital-characteristics workbook, builds the site-level
   covariates, merges them onto the analytic cohort by hospital of diagnosis, and
