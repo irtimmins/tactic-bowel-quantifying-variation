@@ -69,4 +69,4 @@ quietly count
 display _n as text "Final analytic sample: " as result r(N)
 
 log close
-display "Step 02 done: flow chart written to $out/colon_flowchart.txt"
+display "Step 03 done: flow chart written to $out/colon_flowchart.txt"

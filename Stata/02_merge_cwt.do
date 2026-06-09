@@ -169,4 +169,4 @@ replace missing_CWT = 0
 compress
 save "$work/colon_cohort_analytic.dta", replace
 
-display "Step 01 done: analytic cohort saved with " _N " patients."
+display "Step 02 done: analytic cohort saved with " _N " patients."

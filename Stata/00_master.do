@@ -32,14 +32,16 @@ global provxlsx "Data/synthetic/NHSHospitals_services_colon_synthetic.xlsx"
 cap mkdir "$work"
 cap mkdir "$out"
 
-/* run the pipeline --------------------------------------------------------- */
-do "01_data_format_checks.do"             // confirm inputs are well formed
-do "02_merge_cwt.do"
-do "03_flowchart_exclusions.do"
-do "04_patient_characteristics.do"
-do "05_interaction_change_trust_route.do"
-do "06_competitor_status.do"        // net patient flow -> Winner/Loser/Insignificant
-do "07_trust_random_effects.do"     // 
-do "08_provider_level.do"           //
+// first confirm inputs are well formed
+do "Stata/01_data_format_checks.do"             
+
+/* then run the pipeline --------------------------------------------------------- */
+do "Stata/02_merge_cwt.do"
+do "Stata/03_flowchart_exclusions.do"
+do "Stata/04_patient_characteristics.do"
+do "Stata/05_interaction_change_trust_route.do"
+do "Stata/06_competitor_status.do"        // net patient flow -> Winner/Loser/Insignificant
+do "Stata/07_provider_level.do"           //
+do "Stata/08_trust_random_effects.do"     // 
 
 display "Pipeline complete."

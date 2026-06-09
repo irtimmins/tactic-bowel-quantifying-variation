@@ -127,4 +127,4 @@ replace sd   = round(sd,   0.01)
 order measure covariate level_id level_name n mean sd
 export delimited using "$out/colon_characteristics.csv", replace quote
 
-display "Step 03 done: log + tidy CSV written to $out."
+display "Step 04 done: log + tidy CSV written to $out."

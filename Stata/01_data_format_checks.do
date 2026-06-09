@@ -1,9 +1,9 @@
 /*=============================================================================
   01 - Check input data formats
   -----------------------------------------------------------------------------
-  Pre-flight check that the two pipeline inputs are in the shape the rest of
+  Check that the two dataset inputs are in the shape the rest of
   the scripts expect. Reports every problem it finds (it does not stop at the
-  first), then prints a final verdict. Run this before 01.
+  first), then prints a final summary. Run this before 02, 03, ....
 
   Checks:
     - both files exist
@@ -15,8 +15,8 @@
     - the merge key overlaps between the two files
 
   Inputs (in $syn):
-    colon_ncras_hes_synthetic.dta     Table A, registry + HES backbone
-    colon_cwt_records_synthetic.dta   Table B, raw CWT records
+    colon_ncras_hes_synthetic.dta     Dataset A, registry + HES
+    colon_cwt_records_synthetic.dta   Dataset B, raw CWT records
 =============================================================================*/
 
 clear all
@@ -56,7 +56,7 @@ program define chkvar
 end
 
 *==============================================================================
-* Table A: registry + HES backbone
+* Dataset A: registry + HES
 *==============================================================================
 display _n "{hline 70}"
 display "Checking Table A: colon_ncras_hes_synthetic.dta"
@@ -125,7 +125,7 @@ else {
 }
 
 *==============================================================================
-* Table B: raw CWT records
+* Dataset B: raw CWT records
 *==============================================================================
 display _n "{hline 70}"
 display "Checking Table B: colon_cwt_records_synthetic.dta"
@@ -215,10 +215,10 @@ if `haveA' & `haveB' {
     quietly count if _merge == 2
     local n_aonly = r(N)
 
-    display "  Table A patients: `nA'"
-    display "  Table B distinct patients: `nB'"
+    display "  Dataset A patients: `nA'"
+    display "  Dataset B distinct patients: `nB'"
     display "  patients in both files: `n_match'"
-    display "  Table A patients with no CWT record: `n_aonly'"
+    display "  Dataset A patients with no CWT record: `n_aonly'"
 
     if `n_match' == 0 {
         display as error "  FAIL: no patient ids overlap - the merge would return nothing"
