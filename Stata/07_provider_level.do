@@ -119,33 +119,70 @@ if `have_tx' {
 
 *------------------------------------------------------------------------------
 * Mean waiting time by each site characteristic
-*  reports mean, SE and patient N per group, and the number of hospitals
+*  reports mean, SE, patient N and hospital N per group, as a readable log and
+*  a tidy long CSV (one row per measure x characteristic x level)
 *------------------------------------------------------------------------------
-log using "$out/colon_provider_level.txt", text replace
-
 local wtvars wt_dx_to_dtt wt_dtt_to_tx wt_dx_to_tx
 local covars comprehensive teaching cqc_rating staff_eng_cat moral_cat bed_occ_cat
 if `have_diag' local covars `covars' competitor_status_diag
 if `have_tx'   local covars `covars' competitor_status_tx
 
+* tidy output postfile
+tempname pf
+tempfile results
+postfile `pf' str16 measure str24 covariate double level_id str48 level_name ///
+    double n_patients double mean double se double n_hospitals ///
+    using `results', replace
+
+log using "$out/colon_provider_level.txt", text replace
+
 foreach y of local wtvars {
     foreach c of local covars {
 
-        * count distinct hospitals by the role the covariate refers to
+        * distinct-hospital count keys on the role the covariate refers to
         local hospvar diag_hosp
         if "`c'" == "competitor_status_tx" local hospvar tx_hosp
 
         display _n "Outcome: `y'  |  characteristic: `c'"
         tabstat `y', by(`c') stats(mean semean n) nototal
 
+        display "Hospitals per group (`hospvar'):"
         preserve
             bysort `c' `hospvar': keep if _n == 1
             gen byte one = 1
-            display "Hospitals per group (`hospvar'):"
             tabstat one, by(`c') stats(n) nototal
         restore
+
+        * tidy rows: loop over the levels of this characteristic
+        quietly levelsof `c', local(lvls)
+        foreach l of local lvls {
+            local lname : label (`c') `l'
+            if "`lname'" == "" local lname "`l'"
+
+            quietly summarize `y' if `c' == `l'
+            local m  = r(mean)
+            local se = r(sd) / sqrt(r(N))
+            local np = r(N)
+
+            * distinct hospitals contributing to this level
+            quietly bysort `hospvar': gen byte _firsth = (_n == 1) if `c' == `l'
+            quietly count if _firsth == 1
+            local nh = r(N)
+            drop _firsth
+
+            post `pf' ("`y'") ("`c'") (`l') ("`lname'") (`np') (`m') (`se') (`nh')
+        }
     }
 }
 
 log close
-display "Step done: provider-level results written to $out/colon_provider_level.txt"
+postclose `pf'
+
+* export the tidy table
+use `results', clear
+replace mean = round(mean, 0.01)
+replace se   = round(se,   0.01)
+order measure covariate level_id level_name n_patients mean se n_hospitals
+export delimited using "$out/colon_provider_level.csv", replace quote
+
+display "Step done: provider-level log + tidy CSV written to $out."
