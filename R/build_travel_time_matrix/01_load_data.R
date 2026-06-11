@@ -13,9 +13,10 @@ library(purrr)
 library(httr2)
 library(r5r)
 
-# hospital curated dataset
+base_path <- "/home/lshit9/TACTIC/build_distance_matrix/temp_travel_data"
 
-hospital_df <- read_excel("Data/hospital_level/NHSHospitals_services_5.3.26_with_colours.xlsx")
+# hospital curated dataset
+hospital_df <- read_excel(file.path(base_path, "NHSHospitals_services_5.3.26_with_colours.xlsx"))
 
 # site codes in scope, excluding pink/light red, dropping known duplicate
 site_code_vec <- hospital_df %>%
@@ -28,20 +29,22 @@ site_code_vec <- hospital_df %>%
 cat("site codes in scope:", length(site_code_vec), "\n")
 
 # lsoa population-weighted centroids (england and wales, 2011)
-lsoa_centroids <- read_csv("E:/Data_PHE/Extracts/#2045_ICON_TACTIC/travel_time/LSOA_Dec_2011_PWC_in_England_and_Wales_2022_1923591000694358693.csv") %>%
+lsoa_centroids <- read_csv(
+  file.path(base_path, "LSOA_Dec_2011_PWC_in_England_and_Wales_2022_1923591000694358693.csv")
+) %>%
   select(lsoa11_code = LSOA11CD, easting = x, northing = y)
 
 cat("lsoa centroids:", nrow(lsoa_centroids), "\n")
 
 # onspd postcode to easting/northing lookup
-onspd <- fread("E:/Data_PHE/Extracts/#2045_ICON_TACTIC/travel_time/ONSPD_MAY_2025_UK.csv") %>%
+onspd <- fread(file.path(base_path, "ONSPD_MAY_2025_UK.csv")) %>%
   select(postcode = pcds, easting = oseast1m, northing = osnrth1m) %>%
   filter(!is.na(easting))
 
 cat("onspd postcodes:", nrow(onspd), "\n")
 
-# ods site file (used for postcode validation via api, ets.csv kept for reference)
-ods <- read_csv("E:/Data_PHE/Extracts/#2045_ICON_TACTIC/travel_time/ets.csv", col_names = FALSE) %>%
+# ods site file
+ods <- read_csv(file.path(base_path, "ets.csv"), col_names = FALSE) %>%
   select(site_code = X1, site_name = X2, postcode = X10,
          trust_code = X15, open_date = X11, close_date = X12) %>%
   mutate(

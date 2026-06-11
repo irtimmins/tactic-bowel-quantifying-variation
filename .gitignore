@@ -1,8 +1,7 @@
-.Rproj.user
-.Rhistory
-.RData
-.Ruserdata
-Data/*
-Output/*
-Stata/~*
-rjavaenv
+temp_travel_data/
+_rslurm_*/
+Miniconda3-latest-Linux-x86_64.sh
+*.dta
+*.csv
+*.RData
+*.rds
