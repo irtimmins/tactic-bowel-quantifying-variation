@@ -573,7 +573,8 @@ write_dta(nearest_fixed,
 
 cat("exported to stata format\n")
 
-
+git commit -m "travel time matrix pipeline r5r on hpc, slurm parallelisation, validated against lu matrix"
+git push origin main
 
 
 
